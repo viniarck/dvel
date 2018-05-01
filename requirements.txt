@@ -1,1 +1,1 @@
-requests
+/home/arcanjo/repos/napps/viniciusarcanjo/dvel/dvel/requirements.txt
