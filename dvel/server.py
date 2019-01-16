@@ -8,20 +8,32 @@ from sanic.response import json
 app = Sanic()
 
 
-@app.middleware('request')
+@app.middleware("request")
 async def add_start_time(request):
-    request['start_time'] = time.time()
+    """Prepend initial time when this request was served."""
+    request["start_time"] = time.time()
 
 
-@app.middleware('response')
+@app.middleware("response")
 async def add_spent_time(request, response):
-    spend_time = (time.time() - request['start_time']) * 1000
-    print("{} {} {} {} {}ms".format(response.status, request.method,
-                                    request.path, request.query_string, spend_time))
+    """Add spent time on each response."""
+    spend_time = (time.time() - request["start_time"]) * 1000
+    print(
+        "{} {} {} {} {}ms".format(
+            response.status,
+            request.method,
+            request.path,
+            request.query_string,
+            spend_time,
+        )
+    )
 
-@app.route('/echo')
-async def test(request):
-    return json({'response': 'reply'})
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+@app.route("/echo")
+async def echo(request):
+    """Just used for testing the server."""
+    return json({"response": "reply"})
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)

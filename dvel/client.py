@@ -9,60 +9,97 @@ import logging
 import os
 import uvloop
 from aioinflux import InfluxDBClient
+from collections import namedtuple
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
-HTTP_SERVER = os.environ.get('HTTP_SERVER', 'localhost')
-HTTP_PORT = os.environ.get('HTTP_PORT', '8000')
-ENDPOINT = os.environ.get('ENDPOINT', 'echo')
-DB_SERVER = os.environ.get('DB_SERVER', 'localhost')
-DB_NAME = os.environ.get('DB_NAME', 'dvel')
-CONTAINER = os.environ.get('HOSTNAME', 'cx')
 
-FREQUENCY = 0.001
-TIMEOUT = 1
-
-async def make_request(session, url):
-    """ Make request. """
-
-    async with async_timeout.timeout(TIMEOUT):
-        async with session.get(url) as response:
-            return await response.text()
+HTTPServerInfo = namedtuple("HTTPServerInfo", "addr port endpoint")
+DBServerInfo = namedtuple("DBServerInfo", "addr port name")
 
 
-async def main_coroutine():
-    """ Main loop corroutine await for requests,
-    Measure RTTs and push to InfluxDB.
+class Client(object):
 
-    """
-    client = InfluxDBClient(host=DB_SERVER, db=DB_NAME)
-    await client.create_database(host=DB_SERVER, db=DB_NAME)
-    cnt_pkt_loss = 0
-    cur_rtt = 0.0
-    while True:
-        try:
-            async with aiohttp.ClientSession() as session:
-                request_start = loop.time()
-                data = await make_request(session, f'http://{HTTP_SERVER}:{HTTP_PORT}/{ENDPOINT}')
-                cur_rtt = ((loop.time() - request_start) * 1e3) / 2.0  # two req
-        except asyncio.TimeoutError as e:
-            cur_rtt = 0.0
-            cnt_pkt_loss += 1
-        except aiohttp.client_exceptions.ClientConnectorError as e:
-            log.error(f"HTTP server {HTTP_SERVER} connection error")
-        finally:
-            rtt_point = dict(measurement='rtt', tags={'host': CONTAINER}, fields={'value': cur_rtt})
-            await client.write(rtt_point)
-            pkt_loss_point = dict(measurement='cnt_pkt_loss', tags={'host': CONTAINER}, fields={'value': cnt_pkt_loss})
-            await client.write(pkt_loss_point)
-            await asyncio.sleep(FREQUENCY)
+    """Client Abstraction."""
 
-if __name__ == '__main__':
+    def __init__(
+        self,
+        name: str,
+        https_info: HTTPServerInfo,
+        dbs_info: DBServerInfo,
+        frequency: float = 0.001,
+        timeout: int = 1,
+    ) -> None:
+        """Constructor of Client."""
+        self.name = name
+        self.h_info = https_info
+        self.d_info = dbs_info
+        self.influx_client = InfluxDBClient(
+            host=dbs_info.addr, db=dbs_info.name, port=dbs_info.port
+        )
+        self.timeout = timeout
+        self.frequency = frequency
+
+    async def make_request(self, session, url):
+        """ Make request. """
+
+        async with async_timeout.timeout(self.timeout):
+            async with session.get(url) as response:
+                return await response.text()
+
+    async def run(self):
+        """Coroutine run."""
+        client = InfluxDBClient(host=self.d_info.addr, db=self.d_info.name)
+        await client.create_database(host=self.d_info.addr, db=self.d_info.name)
+        cnt_pkt_loss = 0
+        cur_rtt = 0.0
+        url = f"http://{self.h_info.addr}:{self.h_info.port}/{self.h_info.endpoint}"
+        while True:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    request_start = loop.time()
+                    await self.make_request(session, url)
+                    cur_rtt = ((loop.time() - request_start) * 1e3) / 2.0
+                    print(cur_rtt)
+            except asyncio.TimeoutError as e:
+                cur_rtt = 0.0
+                cnt_pkt_loss += 1
+            except aiohttp.client_exceptions.ClientConnectorError as e:
+                log.error(f"HTTP server {self.h_info.addr} connection error")
+            finally:
+                rtt_point = dict(
+                    measurement="rtt",
+                    tags={"host": CONTAINER},
+                    fields={"value": cur_rtt},
+                )
+                await client.write(rtt_point)
+                pkt_loss_point = dict(
+                    measurement="cnt_pkt_loss",
+                    tags={"host": CONTAINER},
+                    fields={"value": cnt_pkt_loss},
+                )
+                await client.write(pkt_loss_point)
+                await asyncio.sleep(self.frequency)
+
+
+if __name__ == "__main__":
+
+    HTTP_SERVER = os.environ.get("HTTP_SERVER", "localhost")
+    HTTP_PORT = os.environ.get("HTTP_PORT", "8000")
+    ENDPOINT = os.environ.get("ENDPOINT", "echo")
+    DB_SERVER = os.environ.get("DB_SERVER", "localhost")
+    DB_PORT = os.environ.get("DB_PORT", 8086)
+    DB_NAME = os.environ.get("DB_NAME", "dvel")
+    CONTAINER = os.environ.get("HOSTNAME", "cx")
+
     try:
         loop = uvloop.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(main_coroutine())
+        http_server_info = HTTPServerInfo(HTTP_SERVER, HTTP_PORT, ENDPOINT)
+        db_server_info = DBServerInfo(DB_SERVER, DB_PORT, DB_NAME)
+        c = Client(CONTAINER, http_server_info, db_server_info)
+        loop.run_until_complete(c.run())
     except KeyboardInterrupt:
-        pass
+        loop.close()
     finally:
         loop.close()
