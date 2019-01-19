@@ -50,7 +50,11 @@ class Client(object):
     async def run(self):
         """Coroutine run."""
         client = InfluxDBClient(host=self.d_info.addr, db=self.d_info.name)
-        await client.create_database(host=self.d_info.addr, db=self.d_info.name)
+        try:
+            await client.create_database(host=self.d_info.addr, db=self.d_info.name)
+        except aiohttp.client_exceptions.ClientConnectorError as e:
+            log.error(e)
+            return
         cnt_pkt_loss = 0
         cur_rtt = 0.0
         url = f"http://{self.h_info.addr}:{self.h_info.port}/{self.h_info.endpoint}"

@@ -2,7 +2,6 @@ version: '2'
 services:
   influxdb:
     command: influxd -config /etc/influxdb/influxdb.conf
-    network_mode: host
     image: influxdb:1.3
     volumes:
       - ./influxdb.conf:/etc/influxdb/influxdb.conf
@@ -11,20 +10,9 @@ services:
       - "8086:8086"
   grafana:
     image: grafana/grafana:5.4.2
-    network_mode: host
     volumes:
       - /var/lib/grafana
     ports:
       - "3000:3000"
     depends_on:
       - "influxdb"
-  # kytos:
-    # entrypoint: /usr/bin/python3.6 /usr/local/bin/kytosd -f -w /tmp
-    # command: /bin/bash
-    # image: kytos/tryfirst:latest
-    # privileged: true
-    # tty: true
-    # stdin_open: true
-    # network_mode: host
-    # ports:
-    #   - "6633:6633"
