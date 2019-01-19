@@ -2,3 +2,4 @@ requests==2.21.0
 sanic==18.12.0
 aiohttp==3.5.4
 aioinflux==0.4.1
+uvloop>=0.11.3
