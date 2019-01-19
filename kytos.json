@@ -1,11 +1,11 @@
 {
-  "author": "viniciusarcanjo",
-  "username": "viniciusarcanjo",
+  "author": "viniarck",
+  "username": "viniarck",
   "name": "dvel",
-  "description": "DTN VPN Express Lane (DVEL)",
+  "description": "DTN VPN Express Lane! (dvel)",
   "version": "0.1",
   "napp_dependencies": ["kytos/topology"],
   "license": "MIT",
   "tags": ["DTN", "VPN", "express", "lane", "dvel", "DVEL"],
-  "url": "https://github.com/viniciusarcanjo/DVEL.git"
+  "url": "https://github.com/viniarck/dvel.git"
 }
