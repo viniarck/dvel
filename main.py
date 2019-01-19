@@ -4,8 +4,11 @@ import requests
 import time
 from kytos.core import KytosNApp, log, rest
 from kytos.core.helpers import listen_to
+from kytos.core.events import KytosEvent
 from flask import jsonify
-from napps.viniciusarcanjo.dvel import settings
+from napps.viniarck.dvel import settings
+from typing import List, Dict, Any
+from requests.models import Response
 """
 Topology
 
@@ -32,55 +35,57 @@ d5 -- (5)       |                               |        (5) -- d8
 
 
 class Main(KytosNApp):
-    """Main class of viniciusarcanjo/dvel NApp.
+    """Main class of viniarck/dvel NApp.
 
     """
 
-    def setup(self):
+    def setup(self) -> None:
         """Create a graph to handle the nodes and edges."""
 
-        self.dpids = [
-            '00:00:00:00:00:00:00:01', '00:00:00:00:00:00:00:02',
-            '00:00:00:00:00:00:00:03', '00:00:00:00:00:00:00:04'
-        ]
-        self.bb_n_evcs = 3  # only 3 different paths in the core for now
-        self.bb_nni_ofn1 = 2
-        self.bb_nni_ofn2 = self.bb_nni_ofn1 + self.bb_n_evcs
-        self.bb_nni_vlan1 = 100  # starts at vlan id 100
-        self.bb_nn1_vlan2 = self.bb_nni_vlan1 + self.bb_n_evcs
-        self.bb_edge_uni_ofnum = 1
-        self.bb_host_vlan = self.bb_nn1_vlan2 + 1
+        try:
+            self.dpids: List[str] = settings.dpids
+        except AttributeError:
+            log.error("dpids list is missing on settings.py")
+            exit(1)
 
-        self.bb_sws = {
+        self.bb_n_evcs: int = 3  # only 3 different paths in the core for now
+        self.bb_nni_ofn1: int = 2
+        self.bb_nni_ofn2: int = self.bb_nni_ofn1 + self.bb_n_evcs
+        self.bb_nni_vlan1: int = 100  # starts at vlan id 100
+        self.bb_nn1_vlan2: int = self.bb_nni_vlan1 + self.bb_n_evcs
+        self.bb_edge_uni_ofnum: int = 1
+        self.bb_host_vlan: int = self.bb_nn1_vlan2 + 1
+
+        self.bb_sws: Dict[str, Any] = {
             'dpids': self.dpids[-2:],  # last two elements.
             'nni_ofnums': range(self.bb_nni_ofn1, self.bb_nni_ofn2),
             'nni_vlans': range(self.bb_nni_vlan1, self.bb_nn1_vlan2),
             'uni_ofnum': self.bb_edge_uni_ofnum
         }
 
-        self.edge_n_evcs = self.bb_n_evcs  # one container for each evc
-        self.edge_uni_ofn1 = 3
-        self.edge_uni_ofn2 = self.edge_uni_ofn1 + self.edge_n_evcs
-        self.edge_host_ofnum = 1
-        self.bb_edge_nni_ofnum = 2  # single uplink, so no range for now.
+        self.edge_n_evcs: int = self.bb_n_evcs  # one container for each evc
+        self.edge_uni_ofn1: int = 3
+        self.edge_uni_ofn2: int = self.edge_uni_ofn1 + self.edge_n_evcs
+        self.edge_host_ofnum: int = 1
+        self.bb_edge_nni_ofnum: int = 2  # single uplink, so no range for now.
 
-        self.edge_sws = {
+        self.edge_sws: Dict[str, Any] = {
             'dpids': self.dpids[0:2],
             'uni_ofnums': range(self.edge_uni_ofn1, self.edge_uni_ofn2),
             'nni_vlans': self.bb_sws['nni_vlans'],
             'nni_ofnum': self.bb_edge_nni_ofnum
         }
 
-    def execute(self):
+    def execute(self) -> None:
         """Execute."""
         self._wait_all_dpids(self.dpids)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the napp."""
         pass
 
-    def _wait_all_dpids(self, dpids):
-        """Wait until all dpids have connected
+    def _wait_all_dpids(self, dpids: List[str]) -> None:
+        """Wait until all dpids have connected.
 
         :dpids: List of switch dpids
 
@@ -91,20 +96,19 @@ class Main(KytosNApp):
         while not connected:
             if self.controller.switches.keys():
                 for dpid in dpids:
-                    # if any dpid is not in the dict yet then break
                     if dpid not in self.controller.switches.keys():
                         break
-                    # if the dpid is in the dict but not connected, then break
                     if dpid in self.controller.switches.keys():
                         if not self.controller.switches[dpid].is_connected():
                             break
                 connected = True
+            time.sleep(1)
         log.info('All dpids have connected')
         time.sleep(3)  # after handshake
         for dpid in dpids:
             self.provision_evcs_dpid(dpid)
 
-    def _provision_bb_evcs(self, dpid):
+    def _provision_bb_evcs(self, dpid: str) -> Response:
         """Provision Backbone Ethernet Virtual Circuits for this dpid.
 
         :dpid: Switch dpid
@@ -132,7 +136,7 @@ class Main(KytosNApp):
             log.error('Response {}'.format(response.text))
         return response
 
-    def _provision_edge_evcs(self, dpid):
+    def _provision_edge_evcs(self, dpid: str) -> Response:
         """Provision Backbone Ethernet Virtual Circuits on this dpid.
 
         :dpid: Switch dpid
@@ -169,7 +173,7 @@ class Main(KytosNApp):
             log.error('Response {}'.format(response.text))
         return response
 
-    def _provision_host_bb_evc(self, dpid, path=1):
+    def _provision_host_bb_evc(self, dpid: str, path: int=1) -> Response:
         """Provision Backbone Ethernet Virtual Circuit of the Host on this dpid.
 
         :dpid: Switch dpid
@@ -197,7 +201,7 @@ class Main(KytosNApp):
             log.error('Response {}'.format(response.text))
         return response
 
-    def provision_evcs_dpid(self, dpid):
+    def provision_evcs_dpid(self, dpid: str) -> None:
         """Provision Ethernet Virtual Circuits (EVCs) for each pre-defined dpid
 
         :dpid: Switch dpid
@@ -221,7 +225,7 @@ class Main(KytosNApp):
                          in_vlan=None,
                          out_vlan=None,
                          push=False,
-                         pop=False):
+                         pop=False) -> Dict[str, Any]:
         """Prepare flow mod for sigle-tag EVCs."""
         default_action = {"action_type": "output", "port": out_interface}
 
@@ -245,14 +249,14 @@ class Main(KytosNApp):
         return flow_mod
 
     @staticmethod
-    def send_flow_mods(switch, flow_mods):
+    def send_flow_mods(switch, flow_mods) -> Response:
         """Send a flow_mod list to a specific switch."""
         endpoint = "%s/flows/%s" % (settings.FMNGR_URL, switch)
 
         data = {"flows": flow_mods}
         return requests.post(endpoint, json=data)
 
-    def _activate_host_evc(self, dpid, cvlan):
+    def _activate_host_evc(self, dpid, cvlan) -> Response:
         """Activate the host EVPL cvlan
 
         :dpid: Switch dpid
@@ -279,7 +283,7 @@ class Main(KytosNApp):
         return response
 
     @rest('/changelane/<path>', methods=['POST'])
-    def change_lane(self, path):
+    def change_lane(self, path) -> tuple:
         """Change the application EVC to another path.
 
         :path: path number either 1, 2, or 3
@@ -296,11 +300,12 @@ class Main(KytosNApp):
             if response.status_code != 200:
                 log.error('Response {}'.format(response.text))
                 return jsonify({'response': response.text}), 404
+        log.info("changed to lane #{}".format(path))
 
         return jsonify({'response': 'changed to lane #{}'.format(path)}), 200
 
     @listen_to('kytos/of_core.handshake_complete')
-    def update_topology(self, event):
+    def update_topology(self, event: KytosEvent) -> None:
         """Listens to new connection and reconnection events.
 
         """
