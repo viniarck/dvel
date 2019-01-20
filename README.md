@@ -29,5 +29,6 @@ QoS is outside of the scope of dvel. QoS policies should be in place per hop, pr
 
 - Add dynamic paths discovery/computations in the core, for example `kytos/pathfinder` (which runs OSPF algorithm).
 - Compute other variable factors such as packet loss when switching to the best path (currently only rtt is taken into account).
+- Currently it takes hundreds of milliseconds to switch the path (it hasn't been fully optimized yet to be as fast as it could be)
 - Implement events to better communicate with other NApps.
 - Provision the EVCs with `kytos/mef_eline`, currently it uses `kytos/flow_manager` directly (since when I started prototyping this mef_eline was not fully stable and didn't have VLAN pool settings)
