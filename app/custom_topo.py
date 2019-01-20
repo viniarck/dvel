@@ -125,13 +125,13 @@ d1 = net.addDocker(
     host_d1,
     ip=env["d1"],
     dimage="registry.gitlab.com/viniarck/containernet-docker:client",
-    dcmd="/sbin/my_init",
+    dcmd="/sbin/my_init -- python3 client.py",
     environment=d1_env,
 )
 d2 = net.addDocker(
     host_d2,
     ip=env["d2"],
-    dcmd="/sbin/my_init",
+    dcmd="/sbin/my_init -- python3 server.py",
     dimage="registry.gitlab.com/viniarck/containernet-docker:server",
     environment=env,
 )
@@ -141,7 +141,7 @@ d3_env["CONTAINER"] = host_d3
 d3 = net.addDocker(
     host_d3,
     ip=env["d3"],
-    dcmd="/sbin/my_init",
+    dcmd="/sbin/my_init -- python3 client.py",
     dimage="registry.gitlab.com/viniarck/containernet-docker:client",
     environment=d3_env,
 )
@@ -151,7 +151,7 @@ d4_env["CONTAINER"] = host_d3
 d4 = net.addDocker(
     host_d4,
     ip=env["d4"],
-    dcmd="/sbin/my_init",
+    dcmd="/sbin/my_init -- python3 client.py",
     dimage="registry.gitlab.com/viniarck/containernet-docker:client",
     environment=d4_env,
 )
@@ -161,28 +161,28 @@ d5_env["CONTAINER"] = host_d3
 d5 = net.addDocker(
     host_d5,
     ip=env["d5"],
-    dcmd="/sbin/my_init",
+    dcmd="/sbin/my_init -- python3 client.py",
     dimage="registry.gitlab.com/viniarck/containernet-docker:client",
     environment=d5_env,
 )
 d6 = net.addDocker(
     host_d6,
     ip=env["d6"],
-    dcmd="/sbin/my_init",
+    dcmd="/sbin/my_init -- python3 server.py",
     dimage="registry.gitlab.com/viniarck/containernet-docker:server",
     environment=env,
 )
 d7 = net.addDocker(
     host_d7,
     ip=env["d7"],
-    dcmd="/sbin/my_init",
+    dcmd="/sbin/my_init -- python3 server.py",
     dimage="registry.gitlab.com/viniarck/containernet-docker:server",
     environment=env,
 )
 d8 = net.addDocker(
     host_d8,
     ip=env["d8"],
-    dcmd="/sbin/my_init",
+    dcmd="/sbin/my_init -- python3 server.py",
     dimage="registry.gitlab.com/viniarck/containernet-docker:server",
     environment=env,
 )
