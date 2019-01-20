@@ -13,9 +13,9 @@ It's a dynamic source-based VPN forwarding SDN application, which selects an opt
 ## EVCs (Ethernet Virtual Circuit)
 
 - The EVC, provisioned by the [MEF E-line application](https://github.com/kytos/mef_eline), will terminate on SDN switches that belong to the provides, and the OvS instance on the host will stitch or extend the circuit to the host's NIC (network interface card).
-- MEF E-line will try to compute and install at least three EVCs for each DTN node. (`3*O(n) complexity` on OvS). At scale, if there are hundreds/thousands of DTNs, in the network core these tunnels/EVCs could be reutilized like MPLS do between common PEs.
+- MEF E-line will try to compute and install at least three EVCs for each DTN node. (`3*O(n) complexity` on OvS). At scale, if there are hundreds/thousands of DTNs, in the network core these tunnels could be reutilized like MPLS does.
 - Periodic network measurement probes will be activated for each EVC. Ideally, these probes would be based on sampled traffic of the application but at lower rates, thousand samples per second via a network socket. These probes will generate asynchronous events.
-- Either kytos controller itself or the DTNs will run an optimization algorithm in another Application based on the results of these probes.
+- Either kytos controller itself or the DTNs will run an optimization algorithm and make http requests to dvel in order to change lanes (paths).
 
 ### Network Measurement Probes
 
