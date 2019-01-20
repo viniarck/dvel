@@ -23,7 +23,8 @@ db_name = "dvel"
 frequency = 0.5
 # timeout to detect loss when sending requests to the db
 timeout = 3
-params = {"l_rtt_key": "d3", "max_rtt": 1.0e4}
+# container params
+c_params = {"l_rtt_key": "d3", "max_rtt": 1.0e4}
 # containers names and their respective lanes
 containers = {
     "d3": {"rtt": 0.0, "pkt_loss": 0, "evc_path": 1},
