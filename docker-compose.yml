@@ -16,3 +16,21 @@ services:
       - "3000:3000"
     depends_on:
       - "influxdb"
+  containernet:
+    image: registry.gitlab.com/viniarck/containernet-docker:2.9.0
+    privileged: true
+    stdin_open: true
+    tty: true
+    pid: host
+    # to simplify testing topology and allow kytos to run even without building a container
+    network_mode: host
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./app:/app  # requires app/your_custom_topo.py, uses custom_topo.py by default.
+    environment:
+      - ofcontroller_ip=127.0.0.1
+      - ofcontroller_port=6633
+      - CONTAINERNET_TOPOFILE=/app/custom_topo.py
