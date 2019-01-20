@@ -135,7 +135,7 @@ class Main(KytosNApp):
                 # find lowest first
                 for key, attrs in self.containers.items():
                     # if the latency is lower, update lowest rtt key
-                    if attrs["rtt"]*1.20 < l_rtt and attrs["rtt"] > 0:
+                    if attrs["rtt"] * 1.20 < l_rtt and attrs["rtt"] > 0:
                         cur_key = key
                         l_rtt = attrs["rtt"]
                 if self.c_params["l_rtt_key"] != cur_key:
