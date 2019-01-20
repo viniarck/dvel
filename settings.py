@@ -19,15 +19,15 @@ db_server = "localhost"
 # influx db name
 db_name = "dvel"
 
-# frequency to eval the async loop
-frequency = 0.5
+# frequency to eval the async loop, 50ms
+frequency = 0.05
 # timeout to detect loss when sending requests to the db
 timeout = 3
 # container params
 c_params = {"l_rtt_key": "d3", "max_rtt": 1.0e4}
 # containers names and their respective lanes
 containers = {
-    "d3": {"rtt": 0.0, "pkt_loss": 0, "evc_path": 1},
-    "d4": {"rtt": 0, "pkt_loss": 0.0, "evc_path": 2},
-    "d5": {"rtt": 0.0, "pkt_loss": 0, "evc_path": 3},
+    "d3": {"rtt": 1.0e4, "pkt_loss": 0.0, "evc_path": 1},
+    "d4": {"rtt": 1.0e4, "pkt_loss": 0.0, "evc_path": 2},
+    "d5": {"rtt": 1.0e4, "pkt_loss": 0.0, "evc_path": 3},
 }

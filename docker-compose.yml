@@ -16,6 +16,8 @@ services:
       - "3000:3000"
     depends_on:
       - "influxdb"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=secret
   containernet:
     image: registry.gitlab.com/viniarck/containernet-docker:2.9.0
     privileged: true
