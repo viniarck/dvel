@@ -109,9 +109,9 @@ class Main(KytosNApp):
         except aiohttp.client_exceptions.ClientConnectorError as e:
             log.error(e)
             return
+        log_flag = True
         while self.run_flag:
             try:
-                log_flag = True
                 cur_key = self.c_params["l_rtt_key"]
                 l_rtt = self.containers[cur_key]["rtt"]
                 for key, attrs in self.containers.items():
@@ -124,20 +124,20 @@ class Main(KytosNApp):
                         self.containers[key]["rtt"] = point
                         # if current path is down, steer away
                         if point == 0.0:
-                            if log_flag:
+                            if log_flag and key == cur_key:
                                 log.info("Current path is down! Steering away.")
                                 log_flag = False
                             self.containers[key]["rtt"] = self.c_params["max_rtt"]
                 await asyncio.sleep(self.frequency)
                 # optimize
                 log.debug(f"current_lowest {self.containers[cur_key]['rtt']}")
+
+                # find lowest first
                 for key, attrs in self.containers.items():
                     # if the latency is lower, update lowest rtt key
-                    if attrs["rtt"] < l_rtt:
+                    if attrs["rtt"]*1.20 < l_rtt and attrs["rtt"] > 0:
                         cur_key = key
-
-                log.debug(f"{cur_key} best")
-                # change path
+                        l_rtt = attrs["rtt"]
                 if self.c_params["l_rtt_key"] != cur_key:
                     log_flag = True
                     evc_path = self.containers[cur_key]["evc_path"]
